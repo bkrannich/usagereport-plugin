@@ -4,7 +4,7 @@ This CF CLI Plugin to shows memory consumption and application instances for eac
 [![wercker status](https://app.wercker.com/status/8881b5530809e3636080d2df6433aada/s/master "wercker status")](https://app.wercker.com/project/bykey/8881b5530809e3636080d2df6433aada)
 
 
-#Usage
+## Usage
 
 For human readable output:
 
@@ -67,15 +67,15 @@ OrgName, SpaceName, SpaceMemoryUsed, OrgMemoryQuota, AppsDeployed, AppsRunning, 
 test-org, test-space, 256, 4096, 2, 1, 3, 2
 ```
 
-##Installation
-#####Install from CLI
+## Installation
+### Install from CLI
   ```
   $ cf add-plugin-repo CF-Community http://plugins.cloudfoundry.org/
   $ cf install-plugin 'Usage Report' -r CF-Community
   ```
 
 
-#####Install from Source (need to have [Go](http://golang.org/dl/) installed)
+### Install from Source (need to have [Go](http://golang.org/dl/) installed)
   ```
   $ go get github.com/cloudfoundry/cli
   $ go get github.com/krujos/usagereport-plugin
