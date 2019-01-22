@@ -58,8 +58,8 @@ func cfCurl(cli plugin.CliConnection, path string) (map[string]interface{}, erro
 	orgsJSON, err := cfcurl.Curl(cli, path)
 
 	if orgsJSON["error_code"] != nil {
-		cfcurlErr := errors.New("Error calling CF API: " + orgsJSON["description"].(string))
-		return nil, cfcurlErr
+		fmt.Println("Error calling CF API: " + orgsJSON["description"].(string))
+		return nil, err
 	}
 
 	return orgsJSON, err
@@ -77,17 +77,19 @@ func (api *APIHelper) GetOrgs() ([]Organization, error) {
 		if 1 != i {
 			orgsJSON, err = cfCurl(api.cli, "/v2/organizations?page="+strconv.Itoa(i))
 		}
-		for _, o := range orgsJSON["resources"].([]interface{}) {
-			theOrg := o.(map[string]interface{})
-			entity := theOrg["entity"].(map[string]interface{})
-			metadata := theOrg["metadata"].(map[string]interface{})
-			orgs = append(orgs,
-				Organization{
-					Name:      entity["name"].(string),
-					URL:       metadata["url"].(string),
-					QuotaURL:  entity["quota_definition_url"].(string),
-					SpacesURL: entity["spaces_url"].(string),
-				})
+		if orgsJSON != nil {
+			for _, o := range orgsJSON["resources"].([]interface{}) {
+				theOrg := o.(map[string]interface{})
+				entity := theOrg["entity"].(map[string]interface{})
+				metadata := theOrg["metadata"].(map[string]interface{})
+				orgs = append(orgs,
+					Organization{
+						Name:      entity["name"].(string),
+						URL:       metadata["url"].(string),
+						QuotaURL:  entity["quota_definition_url"].(string),
+						SpacesURL: entity["spaces_url"].(string),
+					})
+			}
 		}
 	}
 	return orgs, nil
@@ -100,6 +102,10 @@ func (api *APIHelper) GetOrg(name string) (Organization, error) {
 	orgsJSON, err := cfCurl(api.cli, path)
 	if nil != err {
 		return Organization{}, err
+	}
+
+	if orgsJSON == nil {
+		return Organization{}, nil
 	}
 
 	results := int(orgsJSON["total_results"].(float64))
@@ -128,7 +134,7 @@ func (api *APIHelper) orgResourceToOrg(o interface{}) Organization {
 //GetQuotaMemoryLimit retruns the amount of memory (in MB) that the org is allowed
 func (api *APIHelper) GetQuotaMemoryLimit(quotaURL string) (float64, error) {
 	quotaJSON, err := cfCurl(api.cli, quotaURL)
-	if nil != err {
+	if nil != err || quotaJSON == nil {
 		return 0, err
 	}
 	return quotaJSON["entity"].(map[string]interface{})["memory_limit"].(float64), nil
@@ -137,7 +143,7 @@ func (api *APIHelper) GetQuotaMemoryLimit(quotaURL string) (float64, error) {
 //GetOrgMemoryUsage returns the amount of memory (in MB) that the org is consuming
 func (api *APIHelper) GetOrgMemoryUsage(org Organization) (float64, error) {
 	usageJSON, err := cfCurl(api.cli, org.URL+"/memory_usage")
-	if nil != err {
+	if nil != err || usageJSON == nil {
 		return 0, err
 	}
 	return usageJSON["memory_usage_in_mb"].(float64), nil
@@ -149,7 +155,7 @@ func (api *APIHelper) GetOrgSpaces(spacesURL string) ([]Space, error) {
 	spaces := []Space{}
 	for nextURL != "" {
 		spacesJSON, err := cfCurl(api.cli, nextURL)
-		if nil != err {
+		if nil != err || spacesJSON == nil {
 			return nil, err
 		}
 		for _, s := range spacesJSON["resources"].([]interface{}) {
@@ -176,7 +182,7 @@ func (api *APIHelper) GetSpaceApps(appsURL string) ([]App, error) {
 	apps := []App{}
 	for nextURL != "" {
 		appsJSON, err := cfCurl(api.cli, nextURL)
-		if nil != err {
+		if nil != err || appsJSON == nil {
 			return nil, err
 		}
 		for _, a := range appsJSON["resources"].([]interface{}) {
@@ -185,8 +191,8 @@ func (api *APIHelper) GetSpaceApps(appsURL string) ([]App, error) {
 			apps = append(apps,
 				App{
 					Instances: entity["instances"].(float64),
-					RAM:			 entity["memory"].(float64),
-					Running:	 "STARTED" == entity["state"].(string),
+					RAM:       entity["memory"].(float64),
+					Running:   "STARTED" == entity["state"].(string),
 				})
 		}
 		if next, ok := appsJSON["next_url"].(string); ok {
