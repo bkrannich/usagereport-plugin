@@ -134,8 +134,8 @@ func (report *Report) CSV() string {
 			appsDeployed := len(space.Apps)
 
 			spaceResult := []string{
-				org.Name,
-				space.Name,
+				"\"" + org.Name + "\"",
+				"\"" + space.Name + "\"",
 				strconv.Itoa(space.ConsumedMemory()),
 				strconv.Itoa(org.MemoryQuota),
 				strconv.Itoa(appsDeployed),
